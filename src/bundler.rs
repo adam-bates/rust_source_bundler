@@ -4,8 +4,8 @@ use std::{
 };
 
 use syn::{
-    visit_mut::VisitMut,
     File as AST,
+    visit_mut::VisitMut,
 };
 
 use anyhow::Result;
@@ -59,11 +59,16 @@ impl VisitMut for Bundler {
         self.visit_visibility_mut(&mut item_mod.vis);
         self.visit_ident_mut(&mut item_mod.ident);
 
-        let mut items = match &mut item_mod.content {
-            Some((_, items)) => std::mem::replace(items, vec![]),
+        if item_mod.content.is_none() {
+            let items = self.generate_mod_items(item_mod.ident.to_string())
+                .expect(&format!("Error bundling mod [{}] from: {:?}", item_mod.ident, self.dir_path));
 
-            None => self.generate_mod_items(item_mod.ident.to_string())
-                .expect(&format!("Error bundling mod [{}] from: {:?}", item_mod.ident, self.dir_path)),
+            item_mod.content = Some((Default::default(), items));
+        }
+
+        let items = match &mut item_mod.content {
+            Some((_, items)) => items,
+            _ => unreachable!(),
         };
 
         for item in items.iter_mut() {
