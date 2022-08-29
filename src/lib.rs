@@ -13,8 +13,8 @@ use rust_format::{
 
 use anyhow::Result;
 
-pub fn bundle_source(root_dir: impl Into<PathBuf>, filename: String) -> Result<String> {
-    let ast = Bundler::new(root_dir.into()).bundle_to_ast(filename)?;
+pub fn bundle_source(root_dir: impl Into<PathBuf>, filename: impl Into<String>) -> Result<String> {
+    let ast = Bundler::new(root_dir.into()).bundle_to_ast(filename.into())?;
 
     let token_stream = ast.into_token_stream();
 
