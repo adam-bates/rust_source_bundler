@@ -4,8 +4,8 @@ use std::{
 };
 
 use syn::{
-    File as AST,
     visit_mut::VisitMut,
+    File as AST,
 };
 
 use anyhow::Result;
@@ -28,28 +28,25 @@ impl Bundler {
         let mut ast = syn::parse_file(&root_code)?;
 
         self.visit_file_mut(&mut ast);
-       
+
         return Ok(ast);
     }
 
-    fn bundle_mod(&mut self, item_mod: &mut syn::ItemMod) -> Result<()> {
-        let name = item_mod.ident.to_string();
+    fn generate_mod_items(&mut self, mod_name: String) -> Result<Vec<syn::Item>> {
+        let (mut bundler, mut ast) =
+            match fs::read_to_string(self.dir_path.join(format!("{mod_name}.rs"))) {
+                Ok(code) => (Bundler::new(self.dir_path.clone()), syn::parse_file(&code)?),
+                _ => {
+                    let dir_path = self.dir_path.join(mod_name);
+                    let code = fs::read_to_string(dir_path.join(String::from("mod.rs")))?;
 
-        let (mut bundler, mut ast) = match fs::read_to_string(self.dir_path.join(format!("{name}.rs"))) {
-            Ok(code) => (Bundler::new(self.dir_path.clone()), syn::parse_file(&code)?),
-            _ => {
-                let dir_path = self.dir_path.join(name);
-                let code = fs::read_to_string(dir_path.join(String::from("mod.rs")))?;
-
-                (Bundler::new(dir_path), syn::parse_file(&code)?)
-            },
-        };
+                    (Bundler::new(dir_path), syn::parse_file(&code)?)
+                }
+            };
 
         bundler.visit_file_mut(&mut ast);
 
-        item_mod.content = Some((Default::default(), ast.items));
-
-        return Ok(());
+        return Ok(ast.items);
     }
 }
 
@@ -58,19 +55,19 @@ impl VisitMut for Bundler {
         for attr in &mut item_mod.attrs {
             self.visit_attribute_mut(attr);
         }
-        
+
         self.visit_visibility_mut(&mut item_mod.vis);
         self.visit_ident_mut(&mut item_mod.ident);
-        
-        if item_mod.content.is_none() {
-            self.bundle_mod(item_mod)
-                .expect(&format!("Error bundling mod [{}] from: {:?}", item_mod.ident, self.dir_path));
-        }
-        
-        if let Some((_, items)) = &mut item_mod.content {
-            for item in items.iter_mut() {
-                self.visit_item_mut(item);
-            }
+
+        let mut items = match &mut item_mod.content {
+            Some((_, items)) => std::mem::replace(items, vec![]),
+
+            None => self.generate_mod_items(item_mod.ident.to_string())
+                .expect(&format!("Error bundling mod [{}] from: {:?}", item_mod.ident, self.dir_path)),
+        };
+
+        for item in items.iter_mut() {
+            self.visit_item_mut(item);
         }
     }
 }
