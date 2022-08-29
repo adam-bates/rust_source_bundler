@@ -4,7 +4,14 @@ Easily bundle local Rust library files into a single file.
 
 This can be useful when importing or generating Rust code as you can `include!` or `include_str!` on a single generated file containing all modules.
 
-### Example Usage
+### Example
+
+You can run the program on this library's source files
+```
+cargo run --example rust_source_bundler
+```
+
+### Usage
 
 Given the following files:
 
