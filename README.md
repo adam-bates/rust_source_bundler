@@ -1,8 +1,8 @@
 # Rust Source Bundler
 
 [![Crates.io](https://img.shields.io/crates/v/rust_source_bundler.svg)](https://crates.io/crates/rust_source_bundler)
-[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/adam-bates/rust_source_bundler#license)
 [![Crates.io](https://img.shields.io/crates/d/rust_source_bundler.svg)](https://crates.io/crates/rust_source_bundler)
+[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/adam-bates/rust_source_bundler#license)
 
 Easily bundle local Rust library files into a single file.
 
