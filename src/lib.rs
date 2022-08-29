@@ -1,17 +1,25 @@
-mod error;
+mod bundler;
 
-use error::BundleError;
+use bundler::Bundler;
 
-use std::{
-    fs,
-    path::PathBuf,
+use std::path::PathBuf;
+
+use quote::ToTokens;
+
+use rust_format::{
+    Formatter,
+    RustFmt,
 };
 
 use anyhow::Result;
 
-pub fn bundle_source(root_filepath: impl Into<PathBuf>) -> Result<String> {
-    let root_code = fs::read_to_string(root_filepath.into())?;
+pub fn bundle_source(root_dir: impl Into<PathBuf>, filename: String) -> Result<String> {
+    let ast = Bundler::new(root_dir.into()).bundle_to_ast(filename)?;
 
-    return Ok(root_code);
+    let token_stream = ast.into_token_stream();
+
+    let generated_code = RustFmt::default().format_tokens(token_stream)?;
+
+    return Ok(generated_code);
 }
 
